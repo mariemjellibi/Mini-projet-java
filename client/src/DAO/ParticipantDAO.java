@@ -1,31 +1,21 @@
 package DAO;
 
-import Database.DBConnection;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+/**
+ * In this schema there is no dedicated participants table.
+ * "Joining" is tracked implicitly via the results table.
+ * This class is kept as a thin façade so QuizServiceImpl doesn't need to change.
+ */
 public class ParticipantDAO {
-    public boolean joinQuiz(int quizId, String userId) throws SQLException {
-        String sql = "INSERT INTO quiz_participants (user_id, quiz_id, status) VALUES (?, ?, 'in_progress') " +
-                "ON CONFLICT (user_id, quiz_id) DO NOTHING";
-        try (Connection conn = DBConnection.makeConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, userId);
-            stmt.setInt(2, quizId);
-            return stmt.executeUpdate() > 0;
-        }
-    }
 
-    public void markCompleted(int quizId, String userId) throws SQLException {
-        String sql = "UPDATE quiz_participants SET status = 'completed', end_time = CURRENT_TIMESTAMP " +
-                "WHERE quiz_id = ? AND user_id = ?";
-        try (Connection conn = DBConnection.makeConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, quizId);
-            stmt.setString(2, userId);
-            stmt.executeUpdate();
-        }
+    private final ResultDAO resultDAO = new ResultDAOImpl();
+
+    /**
+     * Returns true if this is the first time the user engages with the quiz
+     * (no result row yet). Returns false if the user has already submitted.
+     */
+    public boolean joinQuiz(int quizId, String userId) throws SQLException {
+        return !resultDAO.hasParticipated(quizId, userId);
     }
 }
