@@ -11,7 +11,6 @@ public class ResultDAOImpl implements ResultDAO {
 
     @Override
     public void saveResult(Result result) throws SQLException {
-        // Upsert — honours the UNIQUE (user_id, quiz_id) constraint.
         String sql =
                 "INSERT INTO results (user_id, quiz_id, score) VALUES (?, ?, ?) " +
                         "ON DUPLICATE KEY UPDATE score = VALUES(score)";

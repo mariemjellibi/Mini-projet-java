@@ -71,12 +71,10 @@ public class StudentUI extends JFrame {
 
     public static void main(String[] args) {
         try {
-            String host   = JOptionPane.showInputDialog(null, "Server host:", "localhost");
-            if (host == null) return;
             String userId = JOptionPane.showInputDialog(null, "Your student ID:", "student1");
             if (userId == null || userId.trim().isEmpty()) return;
 
-            Registry registry = LocateRegistry.getRegistry(host, 1099);
+            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
             QuizService service = (QuizService) registry.lookup("QuizService");
 
             SwingUtilities.invokeLater(() -> new StudentUI(service, userId.trim()).setVisible(true));

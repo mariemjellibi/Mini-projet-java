@@ -67,7 +67,7 @@ public class QuestionDAOImpl implements QuestionDAO {
 
     @Override
     public List<Question> getQuestionsByQuizIdWithAnswers(int quizId) throws SQLException {
-        // Single query with LEFT JOIN to fetch questions + their options in one round-trip
+
         String sql =
                 "SELECT q.id AS q_id, q.quiz_id, q.question_text, q.correct_answer, " +
                 "       o.option_text " +
@@ -110,7 +110,7 @@ public class QuestionDAOImpl implements QuestionDAO {
     public List<Question> getQuestionsForClient(int quizId) throws SQLException {
         List<Question> questions = getQuestionsByQuizIdWithAnswers(quizId);
         for (Question q : questions) {
-            q.setCorrectAnswer(null); // hide correct answer from client
+            q.setCorrectAnswer(null);
         }
         return questions;
     }

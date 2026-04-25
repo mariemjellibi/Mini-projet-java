@@ -91,6 +91,10 @@ public class QuizServiceImpl extends UnicastRemoteObject implements QuizService 
     @Override
     public double submitAnswers(int quizId, String userId, Map<Integer, String> answers) throws RemoteException {
         try {
+            // Check if the user has already participated
+            if (resultDAO.hasParticipated(quizId, userId)) {
+                throw new RemoteException("You have already submitted answers for this quiz. You cannot change your answers.");
+            }
             List<Question> questions = questionDAO.getQuestionsByQuizIdWithAnswers(quizId);
             int total = questions.size();
             int correct = 0;

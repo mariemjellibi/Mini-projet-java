@@ -16,12 +16,15 @@ public class LeaderboardPanel extends JPanel {
 
     public LeaderboardPanel() {
         super(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createTitledBorder("Live Leaderboard"));
+        UI.Support.AppStyle.stylePanelWithTitle(this, "Live Leaderboard");
         setPreferredSize(new Dimension(280, 0));
 
         JTable table = new JTable(model);
         table.setFillsViewportHeight(true);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        UI.Support.AppStyle.styleTable(table);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createLineBorder(UI.Support.AppStyle.BORDER));
+        add(scrollPane, BorderLayout.CENTER);
     }
 
     public void render(List<Result> lb) {

@@ -56,6 +56,8 @@ public class QuestionsPanel extends JPanel {
         scroll.setBorder(BorderFactory.createLineBorder(AppStyle.BORDER));
         scroll.getViewport().setBackground(AppStyle.PANEL_BACKGROUND);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
+        // Make the quiz/question area even bigger for better visibility
+        scroll.setPreferredSize(new Dimension(1000, 700));
 
         AppStyle.styleButton(submitButton);
         submitButton.addActionListener(e -> submit());
@@ -68,7 +70,9 @@ public class QuestionsPanel extends JPanel {
         currentQuizId = quizId;
         AsyncTask.run(this,
                 () -> {
+                    // Always check participation status from server
                     boolean canSubmit = service.joinQuiz(quizId, userId);
+                    boolean alreadyParticipated = !canSubmit;
                     List<Question> questions = service.getQuestions(quizId);
                     return new LoadQuizResult(canSubmit, questions);
                 },
@@ -81,6 +85,13 @@ public class QuestionsPanel extends JPanel {
                         submittedQuizIds.add(quizId);
                     }
                     render(result.questions);
+                    // Force parent frame to preferred size for visibility
+                    SwingUtilities.invokeLater(() -> {
+                        Window win = SwingUtilities.getWindowAncestor(this);
+                        if (win != null) {
+                            win.pack();
+                        }
+                    });
                 },
                 "Load quiz failed");
     }
@@ -101,11 +112,15 @@ public class QuestionsPanel extends JPanel {
         answerGroups.clear();
         currentByQuiId.clear();
 
+        // Always check participation status from memory (set by loadQuiz)
         boolean alreadySubmitted = submittedQuizIds.contains(currentQuizId);
         Set<Integer> submittedQuestionIds = submittedQuestionIdsByQuiz.get(currentQuizId);
         Map<Integer, String> submittedAnswers = submittedAnswersByQuiz.get(currentQuizId);
         boolean hasNewQuestions = hasNewQuestions(qs, submittedQuestionIds);
         boolean canSubmit = !alreadySubmitted || hasNewQuestions;
+
+        // If already submitted and no new questions, disable all answer options and submit button
+        boolean lockAll = alreadySubmitted && !hasNewQuestions;
 
         int n = 1;
         for (Question q : qs) {
@@ -118,10 +133,12 @@ public class QuestionsPanel extends JPanel {
                 BorderFactory.createLineBorder(AppStyle.BORDER),
                 "Q" + (n++) + " - " + q.getQuestionText());
             blockBorder.setTitleColor(AppStyle.ACCENT_DARK);
-            blockBorder.setTitleFont(AppStyle.FONT_BODY.deriveFont(Font.BOLD));
+            blockBorder.setTitleFont(AppStyle.FONT_BODY.deriveFont(Font.BOLD)); // keep original font size
             block.setBorder(BorderFactory.createCompoundBorder(
                 blockBorder,
-                BorderFactory.createEmptyBorder(4, 6, 4, 6)));
+                BorderFactory.createEmptyBorder(32, 48, 32, 48))); // much more padding for a bigger box
+            block.setMaximumSize(new Dimension(900, 300)); // make the box itself much bigger
+            block.setPreferredSize(new Dimension(900, 300));
 
             ButtonGroup grp = new ButtonGroup();
             answerGroups.put(q.getId(), grp);
@@ -134,14 +151,14 @@ public class QuestionsPanel extends JPanel {
                     rb.setForeground(AppStyle.TEXT_PRIMARY);
                     rb.setFont(AppStyle.FONT_BODY);
                     boolean lockExisting = alreadySubmitted && submittedQuestionIds != null && submittedQuestionIds.contains(q.getId());
-                    if (lockExisting) {
-                        rb.setEnabled(false);
-                        String submittedAnswer = submittedAnswers == null ? null : submittedAnswers.get(q.getId());
+                    boolean shouldDisable = lockAll || lockExisting;
+                    rb.setEnabled(!shouldDisable && canSubmit);
+                    String submittedAnswer = submittedAnswers == null ? null : submittedAnswers.get(q.getId());
+                    if (shouldDisable) {
                         if (submittedAnswer != null && submittedAnswer.equals(opt)) {
                             rb.setSelected(true);
                         }
                     } else {
-                        rb.setEnabled(canSubmit);
                         String previous = previousSelections.get(q.getId());
                         if (previous != null && previous.equals(opt)) {
                             rb.setSelected(true);
@@ -154,7 +171,7 @@ public class QuestionsPanel extends JPanel {
             questionsContainer.add(block);
             questionsContainer.add(Box.createVerticalStrut(6));
         }
-        submitButton.setEnabled(canSubmit);
+        submitButton.setEnabled(canSubmit && !lockAll);
         questionsContainer.revalidate();
         questionsContainer.repaint();
     }

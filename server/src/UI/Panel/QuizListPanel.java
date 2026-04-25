@@ -21,25 +21,35 @@ public class QuizListPanel extends JPanel {
                          Consumer<Quiz> onAction) {
         super(new BorderLayout(5, 5));
         this.service = service;
-        setBorder(BorderFactory.createTitledBorder(title));
+        UI.Support.AppStyle.stylePanelWithTitle(this, title);
         setPreferredSize(new Dimension(260, 0));
 
         list.setCellRenderer((l, v, i, sel, foc) -> {
             JLabel lbl = new JLabel(v == null ? "" : "#" + v.getId() + "  " + v.getTitle());
             lbl.setOpaque(true);
-            if (sel) { lbl.setBackground(l.getSelectionBackground()); lbl.setForeground(l.getSelectionForeground()); }
+            lbl.setFont(UI.Support.AppStyle.FONT_BODY);
+            lbl.setForeground(UI.Support.AppStyle.TEXT_PRIMARY);
+            if (sel) {
+                lbl.setBackground(UI.Support.AppStyle.LIST_SELECTION);
+                lbl.setForeground(UI.Support.AppStyle.TEXT_PRIMARY);
+            } else {
+                lbl.setBackground(UI.Support.AppStyle.PANEL_BACKGROUND);
+            }
             lbl.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
             return lbl;
         });
 
         actionButton = new JButton(actionLabel);
+        UI.Support.AppStyle.styleButton(actionButton);
         actionButton.addActionListener(e -> {
             Quiz q = list.getSelectedValue();
             if (q != null) onAction.accept(q);
             else JOptionPane.showMessageDialog(this, "Select a quiz first.");
         });
 
-        add(new JScrollPane(list), BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane(list);
+        scrollPane.setBorder(BorderFactory.createLineBorder(UI.Support.AppStyle.BORDER));
+        add(scrollPane, BorderLayout.CENTER);
         add(actionButton, BorderLayout.SOUTH);
     }
 

@@ -21,13 +21,16 @@ public class CreateQuizPanel extends JPanel {
         super(new GridBagLayout());
         this.service = service;
         this.listener = listener;
-        setBorder(BorderFactory.createTitledBorder("Create Quiz"));
+        UI.Support.AppStyle.stylePanelWithTitle(this, "Create Quiz");
 
         GridBagConstraints g = new GridBagConstraints();
         g.insets = new Insets(4, 4, 4, 4);
         g.fill = GridBagConstraints.HORIZONTAL;
 
+        UI.Support.AppStyle.styleTextField(titleField);
+        UI.Support.AppStyle.styleTextField(teacherField);
         JButton createBtn = new JButton("Create Quiz");
+        UI.Support.AppStyle.styleButton(createBtn);
         createBtn.addActionListener(e -> create());
 
         g.gridx = 0; g.gridy = 0; add(new JLabel("Title:"), g);

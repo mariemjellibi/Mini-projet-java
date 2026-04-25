@@ -28,14 +28,21 @@ public class AddQuestionPanel extends JPanel {
         super(new GridBagLayout());
         this.service = service;
         this.selectedQuizSupplier = selectedQuizSupplier;
-        setBorder(BorderFactory.createTitledBorder("Add Question (to selected quiz)"));
+        UI.Support.AppStyle.stylePanelWithTitle(this, "Add Question (to selected quiz)");
 
         GridBagConstraints g = new GridBagConstraints();
         g.insets = new Insets(4, 4, 4, 4);
         g.fill = GridBagConstraints.HORIZONTAL;
         g.weightx = 1.0;
 
+        UI.Support.AppStyle.styleTextField(textField);
+        UI.Support.AppStyle.styleTextField(opt1);
+        UI.Support.AppStyle.styleTextField(opt2);
+        UI.Support.AppStyle.styleTextField(opt3);
+        UI.Support.AppStyle.styleTextField(opt4);
+        UI.Support.AppStyle.styleTextField(correctField);
         JButton addBtn = new JButton("Add Question");
+        UI.Support.AppStyle.styleButton(addBtn);
         addBtn.addActionListener(e -> addQuestion());
 
         int row = 0;
