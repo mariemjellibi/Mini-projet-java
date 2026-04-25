@@ -1,6 +1,7 @@
 package UI.Panel;
 
 import Model.Result;
+import UI.Support.AppStyle;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -16,12 +17,16 @@ public class LeaderboardPanel extends JPanel {
 
     public LeaderboardPanel() {
         super(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createTitledBorder("Live Leaderboard"));
+        AppStyle.stylePanelWithTitle(this, "Live Leaderboard");
         setPreferredSize(new Dimension(260, 0));
 
         JTable table = new JTable(model);
         table.setFillsViewportHeight(true);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        AppStyle.styleTable(table);
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createLineBorder(AppStyle.BORDER));
+        add(scrollPane, BorderLayout.CENTER);
     }
 
     public void render(List<Result> lb) {

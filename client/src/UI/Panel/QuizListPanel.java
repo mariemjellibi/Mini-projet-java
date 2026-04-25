@@ -3,9 +3,12 @@ package UI.Panel;
 import Model.Quiz;
 import Service.QuizService;
 import UI.Support.AsyncTask;
+import UI.Support.AppStyle;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -15,37 +18,48 @@ public class QuizListPanel extends JPanel {
     private final DefaultListModel<Quiz> model = new DefaultListModel<>();
     private final JList<Quiz> list = new JList<>(model);
 
-    public QuizListPanel(QuizService service, String title, String actionLabel,
-                         Consumer<Quiz> onAction) {
+    public QuizListPanel(QuizService service, String title, Consumer<Quiz> onAction) {
         super(new BorderLayout(5, 5));
         this.service = service;
-        setBorder(BorderFactory.createTitledBorder(title));
+        AppStyle.stylePanelWithTitle(this, title);
         setPreferredSize(new Dimension(240, 0));
 
+        AppStyle.styleList(list);
         list.setCellRenderer((l, v, i, sel, foc) -> {
             JLabel lbl = new JLabel(v == null ? "" : "#" + v.getId() + "  " + v.getTitle());
             lbl.setOpaque(true);
-            if (sel) { lbl.setBackground(l.getSelectionBackground()); lbl.setForeground(l.getSelectionForeground()); }
+            lbl.setFont(AppStyle.FONT_BODY);
+            lbl.setForeground(AppStyle.TEXT_PRIMARY);
+            if (sel) {
+                lbl.setBackground(AppStyle.LIST_SELECTION);
+                lbl.setForeground(AppStyle.TEXT_PRIMARY);
+            } else {
+                lbl.setBackground(AppStyle.PANEL_BACKGROUND);
+            }
             lbl.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
             return lbl;
         });
-
-        JButton refresh = new JButton("⟳ Refresh");
-        refresh.addActionListener(e -> refresh());
-
-        JButton action = new JButton(actionLabel);
-        action.addActionListener(e -> {
-            Quiz q = list.getSelectedValue();
-            if (q != null) onAction.accept(q);
-            else JOptionPane.showMessageDialog(this, "Select a quiz first.");
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        list.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    Quiz q = list.getSelectedValue();
+                    if (q != null) {
+                        onAction.accept(q);
+                    }
+                }
+            }
         });
 
-        JPanel buttons = new JPanel(new GridLayout(1, 2, 5, 5));
-        buttons.add(refresh);
-        buttons.add(action);
-
-        add(new JScrollPane(list), BorderLayout.CENTER);
-        add(buttons, BorderLayout.SOUTH);
+        JScrollPane scrollPane = new JScrollPane(list);
+        scrollPane.setBorder(BorderFactory.createLineBorder(AppStyle.BORDER));
+        add(scrollPane, BorderLayout.CENTER);
+        JLabel hint = new JLabel("Double-click a quiz to join", SwingConstants.CENTER);
+        hint.setFont(AppStyle.FONT_BODY.deriveFont(12f));
+        hint.setForeground(AppStyle.TEXT_MUTED);
+        hint.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
+        add(hint, BorderLayout.SOUTH);
     }
 
     public Quiz getSelected() { return list.getSelectedValue(); }
@@ -57,7 +71,7 @@ public class QuizListPanel extends JPanel {
                 "Refresh quizzes failed");
     }
 
-    private void render(List<Quiz> quizzes) {
+    public void render(List<Quiz> quizzes) {
         model.clear();
         for (Quiz q : quizzes) model.addElement(q);
     }

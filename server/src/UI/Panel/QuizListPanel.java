@@ -9,7 +9,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-/** Shows the list of quizzes with a refresh button. Notifies a listener on selection / action. */
+/** Shows the list of quizzes and notifies a listener on selection / action. */
 public class QuizListPanel extends JPanel {
 
     private final QuizService service;
@@ -32,9 +32,6 @@ public class QuizListPanel extends JPanel {
             return lbl;
         });
 
-        JButton refresh = new JButton("⟳ Refresh");
-        refresh.addActionListener(e -> refresh());
-
         actionButton = new JButton(actionLabel);
         actionButton.addActionListener(e -> {
             Quiz q = list.getSelectedValue();
@@ -42,12 +39,8 @@ public class QuizListPanel extends JPanel {
             else JOptionPane.showMessageDialog(this, "Select a quiz first.");
         });
 
-        JPanel buttons = new JPanel(new GridLayout(1, 2, 5, 5));
-        buttons.add(refresh);
-        buttons.add(actionButton);
-
         add(new JScrollPane(list), BorderLayout.CENTER);
-        add(buttons, BorderLayout.SOUTH);
+        add(actionButton, BorderLayout.SOUTH);
     }
 
     public Quiz getSelected() { return list.getSelectedValue(); }
@@ -59,7 +52,7 @@ public class QuizListPanel extends JPanel {
                 "Refresh quizzes failed");
     }
 
-    private void render(List<Quiz> quizzes) {
+    public void render(List<Quiz> quizzes) {
         model.clear();
         for (Quiz q : quizzes) model.addElement(q);
     }

@@ -30,4 +30,8 @@ public interface QuizService extends Remote {
     // Real-time listener management
     void registerListener(int quizId, LeaderboardListener listener) throws RemoteException;
     void unregisterListener(int quizId, LeaderboardListener listener) throws RemoteException;
+
+    // Quiz catalog updates
+    void registerQuizCatalogListener(QuizCatalogListener listener) throws RemoteException;
+    void unregisterQuizCatalogListener(QuizCatalogListener listener) throws RemoteException;
 }

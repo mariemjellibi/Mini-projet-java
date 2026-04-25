@@ -5,7 +5,9 @@ import Service.QuizService;
 import UI.Panel.LeaderboardPanel;
 import UI.Panel.QuestionsPanel;
 import UI.Panel.QuizListPanel;
+import UI.Support.AppStyle;
 import UI.Support.LeaderboardSubscription;
+import UI.Support.QuizCatalogSubscription;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,14 +22,17 @@ public class StudentUI extends JFrame {
         setSize(950, 600);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
+        getContentPane().setBackground(AppStyle.APP_BACKGROUND);
+        ((JComponent) getContentPane()).setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         LeaderboardPanel        leaderboard  = new LeaderboardPanel();
         LeaderboardSubscription subscription = new LeaderboardSubscription(service);
+        QuizCatalogSubscription quizCatalogSubscription = new QuizCatalogSubscription(service);
         QuestionsPanel          questions    = new QuestionsPanel(
                 service, userId, score -> { /* score already shown by panel */ });
 
         QuizListPanel quizList = new QuizListPanel(
-                service, "Available Quizzes", "Join Selected",
+            service, "Available Quizzes",
                 quiz -> {
                     questions.loadQuiz(quiz.getId());
                     try { subscription.watch(quiz.getId(), leaderboard::render); }
@@ -43,9 +48,23 @@ public class StudentUI extends JFrame {
         add(questions,   BorderLayout.CENTER);
         add(leaderboard, BorderLayout.EAST);
 
+        try {
+            quizCatalogSubscription.watch(quizzes -> {
+                quizList.render(quizzes);
+                questions.refreshCurrentQuiz();
+            });
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Auto quiz updates unavailable:\n" + ex.getMessage(),
+                    "Warning", JOptionPane.WARNING_MESSAGE);
+            quizList.refresh();
+        }
+
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override public void windowClosing(java.awt.event.WindowEvent e) {
                 subscription.cancel();
+                quizCatalogSubscription.cancel();
             }
         });
     }
