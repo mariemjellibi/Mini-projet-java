@@ -20,6 +20,7 @@ public class QuizServiceImpl extends UnicastRemoteObject implements QuizService 
     private QuestionDAO questionDAO;
     private ResultDAO resultDAO;
     private Map<Integer, List<LeaderboardListener>> listenersMap = new HashMap<>();
+    private final List<QuizCatalogListener> quizCatalogListeners = new CopyOnWriteArrayList<>();
     private ParticipantDAO participantDAO = new ParticipantDAO();
 
     public QuizServiceImpl() throws RemoteException {
@@ -32,7 +33,9 @@ public class QuizServiceImpl extends UnicastRemoteObject implements QuizService 
     @Override
     public int createQuiz(Quiz quiz) throws RemoteException {
         try {
-            return quizDAO.createQuiz(quiz);
+            int quizId = quizDAO.createQuiz(quiz);
+            notifyQuizCatalogListeners();
+            return quizId;
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RemoteException("Database error creating quiz");
@@ -43,6 +46,7 @@ public class QuizServiceImpl extends UnicastRemoteObject implements QuizService 
     public void addQuestion(Question question) throws RemoteException {
         try {
             questionDAO.addQuestion(question);
+            notifyQuizCatalogListeners();
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RemoteException("Database error adding question");
@@ -88,6 +92,10 @@ public class QuizServiceImpl extends UnicastRemoteObject implements QuizService 
     @Override
     public double submitAnswers(int quizId, String userId, Map<Integer, String> answers) throws RemoteException {
         try {
+            // Check if the user has already participated
+            if (resultDAO.hasParticipated(quizId, userId)) {
+                throw new RemoteException("You have already submitted answers for this quiz. You cannot change your answers.");
+            }
             List<Question> questions = questionDAO.getQuestionsByQuizIdWithAnswers(quizId);
             int total = questions.size();
             int correct = 0;
@@ -140,6 +148,25 @@ public class QuizServiceImpl extends UnicastRemoteObject implements QuizService 
         }
     }
 
+    @Override
+    public synchronized void registerQuizCatalogListener(QuizCatalogListener listener) throws RemoteException {
+        quizCatalogListeners.add(listener);
+        try {
+            listener.onQuizCatalogChanged(quizDAO.getAllQuizzes());
+        } catch (SQLException e) {
+            quizCatalogListeners.remove(listener);
+            throw new RemoteException("Database error fetching quizzes", e);
+        } catch (RemoteException e) {
+            quizCatalogListeners.remove(listener);
+            throw e;
+        }
+    }
+
+    @Override
+    public synchronized void unregisterQuizCatalogListener(QuizCatalogListener listener) throws RemoteException {
+        quizCatalogListeners.remove(listener);
+    }
+
     private void notifyListeners(int quizId) {
         List<LeaderboardListener> listeners = listenersMap.get(quizId);
         if (listeners == null || listeners.isEmpty()) return;
@@ -155,6 +182,28 @@ public class QuizServiceImpl extends UnicastRemoteObject implements QuizService 
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void notifyQuizCatalogListeners() {
+        if (quizCatalogListeners.isEmpty()) {
+            return;
+        }
+
+        List<Quiz> quizzes;
+        try {
+            quizzes = quizDAO.getAllQuizzes();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        for (QuizCatalogListener listener : quizCatalogListeners) {
+            try {
+                listener.onQuizCatalogChanged(quizzes);
+            } catch (RemoteException e) {
+                quizCatalogListeners.remove(listener);
+            }
         }
     }
 }

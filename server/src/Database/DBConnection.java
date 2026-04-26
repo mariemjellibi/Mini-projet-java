@@ -7,7 +7,7 @@ public class DBConnection {
 
     public static Connection makeConnection() {
         try {
-            Class.forName(Config.NOM_Drive);
+            Class.forName(Config.nomDriver);
 
             Connection conn = DriverManager.getConnection(
                     Config.URL_DB,
